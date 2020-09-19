@@ -1,0 +1,78 @@
+version: "3.3"
+
+services:
+  jmicros:
+    hostname: jmicros
+    image: jmicros
+    ports:
+      - 8050:8080
+    depends_on:
+      - memcache
+
+  memcache:
+    hostname: memcache
+    image: memcached
+    ports:
+      - "11212:11211"
+    environment:
+      - MEMCACHED_CACHE_SIZE=128
+      - MEMCACHED_USERNAME=mcache
+      - MEMCACHED_PASSWORD=mcache123!
+
+  zookeeper:
+    restart: always
+    image: zookeeper:3.4.10
+    container_name: zookeeper
+    hostname: zookeeper
+    ports:
+      - 2181:2181
+    volumes:
+      - ./volume/zookeeper/data:/data
+      - ./volume/zookeeper/datalog:/datalog
+
+  kafka:
+    image: confluentinc/cp-kafka:5.1.0
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://$IP:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - ./volume/kafka:/data
+    depends_on:
+      - zookeeper
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.4.0
+    container_name: elasticsearch
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - xpack.security.enabled=false
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  scope:
+    image: weaveworks/scope:1.13.1
+    container_name: scope
+    network_mode: "host"
+    pid: "host"
+    privileged: true
+    labels:
+      - "works.weave.role=system"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:rw"
+    command:
+      - "--probe.docker=true"
