@@ -26,7 +26,7 @@ public class Kafka2Elasticsearch {
 
     public Kafka2Elasticsearch(){
         this.topics = new HashSet<>();
-        this.esRestClient = RestClient.builder(new HttpHost("192.168.0.6", 9200, "http")).build();
+        this.esRestClient = RestClient.builder(new HttpHost("localhost", 9200, "http")).build();
     }
 
     private void run() {
@@ -59,7 +59,7 @@ public class Kafka2Elasticsearch {
         // Set a few key parameters
         settings.put(StreamsConfig.APPLICATION_ID_CONFIG, "k2e");
         // Kafka bootstrap server (broker to talk to); ubuntu is the host name for my VM running Kafka, port 9092 is where the (single) broker listens
-        settings.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.0.6:9092");
+        settings.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         // default serdes for serialzing and deserializing key and value from and to streams in case no specific Serde is specified
         settings.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         settings.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
